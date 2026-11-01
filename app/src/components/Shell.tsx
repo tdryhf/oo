@@ -1,8 +1,10 @@
 import { ChatCircleDots, List, X } from "@phosphor-icons/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAsk } from "./AskChhat";
 import { Logo } from "./ui";
+import { gsap } from "../lib/motion";
+import { prefersReducedMotion } from "../lib/env";
 
 const LINKS = [
   { to: "/report", label: "Roof Report" },
@@ -63,11 +65,30 @@ export function Nav() {
   );
 }
 
+// The big wordmark rises into place as the footer scrolls in, tied to the scroll.
+function useFooterRise(path: string) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".footer__deva",
+        { yPercent: 28 },
+        { yPercent: 0, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "top 35%", scrub: 0.4 } },
+      );
+    }, el);
+    return () => ctx.revert();
+  }, [path]);
+  return ref;
+}
+
 export function Footer() {
   const loc = useLocation();
+  const ref = useFooterRise(loc.pathname);
   if (loc.pathname.startsWith("/deck")) return null;
   return (
-    <footer className="footer no-print">
+    <footer className="footer no-print" ref={ref}>
       <div className="wrap footer__grid">
         <div className="footer__brand">
           <span className="footer__deva deva" aria-hidden="true">

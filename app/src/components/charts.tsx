@@ -2,8 +2,9 @@
 // 4px rounded data-ends, 2px surface gaps, legend for 2+ series, hover tooltips,
 // and a table view (the haldi series is under 3:1 contrast, so the table is required).
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { num, rupees, rupeesShort } from "../engine/format";
+import { prefersReducedMotion } from "../lib/env";
 import { MONTHS } from "../engine/types";
 import type { YearRow } from "../engine/finance";
 
@@ -40,17 +41,45 @@ function niceTicks(min: number, max: number, count = 4) {
   return ticks;
 }
 
-/** Column path with a 4px rounded top and a square base. */
+/** Column path with a 4px rounded top and a square base. Always the same commands, so a change can morph. */
 function colPath(x: number, y: number, w: number, h: number, r = 4) {
-  if (h <= 0) return "";
-  const rr = Math.min(r, h, w / 2);
-  return `M${x},${y + h}V${y + rr}Q${x},${y} ${x + rr},${y}H${x + w - rr}Q${x + w},${y} ${x + w},${y + rr}V${y + h}Z`;
+  const hh = Math.max(0, h);
+  const rr = Math.min(r, hh, w / 2);
+  return `M${x},${y + hh}V${y + rr}Q${x},${y} ${x + rr},${y}H${x + w - rr}Q${x + w},${y} ${x + w},${y + rr}V${y + hh}Z`;
+}
+
+/** The path as a CSS value too, so browsers that can transition `d` glide between datasets. */
+const morph = (d: string) => ({ d: `path("${d}")` }) as unknown as CSSProperties;
+
+/**
+ * Charts draw themselves the first time they are on screen: "wait" until
+ * then, "in" after. Without motion (or without JS) nothing is ever hidden.
+ */
+function useEntrance(ref: RefObject<HTMLElement>) {
+  const [state, setState] = useState<"still" | "wait" | "in">(() => (prefersReducedMotion() || typeof IntersectionObserver === "undefined" ? "still" : "wait"));
+  useEffect(() => {
+    const el = ref.current;
+    if (state !== "wait" || !el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        setState("in");
+      },
+      { rootMargin: "0px 0px -12% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, state]);
+  return state;
 }
 
 export function MonthlyChart({ consumption, generation, billed }: { consumption: number[]; generation: number[]; billed: number[] }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
+  const fig = useRef<HTMLElement>(null);
+  const enter = useEntrance(fig);
   const H = 260;
   const m = { t: 12, r: 8, b: 26, l: 44 };
   const iw = width - m.l - m.r;
@@ -63,7 +92,7 @@ export function MonthlyChart({ consumption, generation, billed }: { consumption:
   const y = (v: number) => m.t + ih - (v / top) * ih;
 
   return (
-    <figure className="chart">
+    <figure className="chart" ref={fig} data-enter={enter}>
       <div className="chart__legend">
         <span>
           <i className="key key--neel" /> Your use
@@ -111,11 +140,13 @@ export function MonthlyChart({ consumption, generation, billed }: { consumption:
             ))}
             {MONTHS.map((mo, i) => {
               const cx = m.l + band * i + band / 2;
+              const use = colPath(cx - bw - 1, y(consumption[i]), bw, y(0) - y(consumption[i]));
+              const sun = colPath(cx + 1, y(generation[i]), bw, y(0) - y(generation[i]));
               return (
-                <g key={mo} onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} tabIndex={0} aria-label={`${mo}: use ${Math.round(consumption[i])} kWh, solar ${Math.round(generation[i])} kWh`}>
+                <g key={mo} style={{ "--i": i } as CSSProperties} onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} tabIndex={0} aria-label={`${mo}: use ${Math.round(consumption[i])} kWh, solar ${Math.round(generation[i])} kWh`}>
                   <rect x={m.l + band * i} y={m.t} width={band} height={ih} className={`hit${hover === i ? " hit--on" : ""}`} />
-                  <path d={colPath(cx - bw - 1, y(consumption[i]), bw, y(0) - y(consumption[i]))} className="bar bar--neel" />
-                  <path d={colPath(cx + 1, y(generation[i]), bw, y(0) - y(generation[i]))} className="bar bar--haldi" />
+                  <path d={use} style={morph(use)} className="bar bar--neel" />
+                  <path d={sun} style={morph(sun)} className="bar bar--haldi" />
                   <text x={cx} y={H - 8} className="axis" textAnchor="middle">
                     {width < 520 ? mo[0] : mo}
                   </text>
@@ -151,6 +182,8 @@ function lakhTick(v: number) {
 export function CashflowChart({ flows, payback }: { flows: YearRow[]; payback: number | null }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
+  const fig = useRef<HTMLElement>(null);
+  const enter = useEntrance(fig);
   const H = 240;
   const m = { t: 18, r: 64, b: 26, l: 56 };
   const iw = width - m.l - m.r;
@@ -165,7 +198,7 @@ export function CashflowChart({ flows, payback }: { flows: YearRow[]; payback: n
   const area = `${line}L${x(25)},${y(0)}L${x(0)},${y(0)}Z`;
   const last = flows[flows.length - 1];
   return (
-    <figure className="chart">
+    <figure className="chart chart--cash" ref={fig} data-enter={enter}>
       <div ref={ref} className="chart__plot" onMouseLeave={() => setHover(null)}>
         <svg
           width={width}
@@ -196,21 +229,25 @@ export function CashflowChart({ flows, payback }: { flows: YearRow[]; payback: n
               {yr === 0 ? "Year 0" : yr}
             </text>
           ))}
-          <path d={area} className="area" clipPath="url(#above0)" />
-          <path d={line} className="line" />
-          {payback !== null && payback <= 25 && (
-            <g>
-              <line x1={x(payback)} x2={x(payback)} y1={m.t} y2={y(0)} className="marker-line" />
-              <circle cx={x(payback)} cy={y(0)} r={5} className="dot" />
-              <text x={x(payback) + 8} y={m.t + 10} className="label">
-                Pays back · {payback.toFixed(1)} yrs
+          <path d={area} style={morph(area)} className="area" clipPath="url(#above0)" />
+          <path d={line} style={morph(line)} className="line" pathLength={1} />
+          <g className="cash-marks">
+            {payback !== null && payback <= 25 && (
+              <g className="cash-mark" style={{ transform: `translateX(${x(payback)}px)` }}>
+                <line x1={0} x2={0} y1={m.t} y2={y(0)} className="marker-line" />
+                <circle cx={0} cy={y(0)} r={5} className="dot" />
+                <text x={8} y={m.t + 10} className="label">
+                  Pays back · {payback.toFixed(1)} yrs
+                </text>
+              </g>
+            )}
+            <g className="cash-mark" style={{ transform: `translate(${x(25)}px, ${y(last.cumulative)}px)` }}>
+              <circle cx={0} cy={0} r={5} className="dot" />
+              <text x={8} y={0} className="label" dominantBaseline="middle">
+                {lakhTick(last.cumulative)}
               </text>
             </g>
-          )}
-          <circle cx={x(25)} cy={y(last.cumulative)} r={5} className="dot" />
-          <text x={x(25) + 8} y={y(last.cumulative)} className="label" dominantBaseline="middle">
-            {lakhTick(last.cumulative)}
-          </text>
+          </g>
           {hover !== null && (
             <g>
               <line x1={x(hover)} x2={x(hover)} y1={m.t} y2={m.t + ih} className="crosshair" />

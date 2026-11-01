@@ -1,5 +1,5 @@
 import { Copy, DownloadSimple } from "@phosphor-icons/react";
-import { usePageIntro } from "../lib/motion";
+import { usePageIntro, useRestamp } from "../lib/motion";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { detectMode, type Mode } from "../ai/client";
@@ -8,6 +8,7 @@ import { ModeBadge } from "../components/AskChhat";
 import { LeadForm } from "../components/LeadForm";
 import { DocIntake } from "../components/DocIntake";
 import { Findings } from "../components/Findings";
+import { Num } from "../components/Num";
 import { Field, NumberInput, Select, TextInput } from "../components/ui";
 import { SAMPLE_SOLAR_BILLS } from "../data/samples";
 import { auditBill, complaintLetter, EMPTY_BILL, type SolarBill } from "../engine/billAudit";
@@ -17,6 +18,7 @@ import { monthlyEnergy } from "../engine/pv";
 import { stateInfo } from "../engine/states";
 import { MONTHS } from "../engine/types";
 import "../styles/tools.css";
+import { BillArt } from "../components/PageArt";
 
 export default function Bill() {
   const intro = usePageIntro<HTMLDivElement>();
@@ -45,10 +47,12 @@ export default function Bill() {
   const letter = useMemo(() => complaintLetter(bill, a, ctx), [bill, a, ctx]);
   const set = <K extends keyof SolarBill>(k: K) => (v: SolarBill[K]) => setBill((p) => ({ ...p, [k]: v }));
   const billedBad = a.expectedNetUnits !== null && bill.netUnitsBilled !== null && bill.netUnitsBilled > a.expectedNetUnits + 2;
+  const mark = a.findings.some((f) => f.severity === "critical") ? "F" : a.findings.some((f) => f.severity === "warn") ? "C" : a.incomplete ? "none" : "A";
+  const stamp = useRestamp<HTMLDivElement>(mark);
 
   return (
     <div className="page" ref={intro}>
-      <header className="wrap page__head">
+      <header className="wrap page__head page__head--art">
         <p className="eyebrow">Bill Audit · after you go solar</p>
         <h1 className="page__title">Is your DISCOM billing you right?</h1>
         <p className="page__lede">
@@ -57,6 +61,7 @@ export default function Bill() {
         <div className="page__meta">
           <ModeBadge mode={mode} />
         </div>
+        <BillArt />
       </header>
 
       <div className="wrap audit__grid">
@@ -157,7 +162,7 @@ export default function Bill() {
 
         <div className="audit__results" aria-live="polite">
           <section className="verdict">
-            <div className="grade" data-g={a.findings.some((f) => f.severity === "critical") ? "F" : a.findings.some((f) => f.severity === "warn") ? "C" : a.incomplete ? "none" : "A"} aria-hidden="true">
+            <div className="grade" data-g={mark} aria-hidden="true" ref={stamp} data-stamp>
               {a.findings.some((f) => f.severity === "critical") ? "✕" : a.findings.some((f) => f.severity === "warn") || a.incomplete ? "?" : "✓"}
             </div>
             <div>
@@ -165,7 +170,11 @@ export default function Bill() {
               <p className="verdict__sub">
                 {a.overbilled > 0 ? (
                   <>
-                    Possibly overbilled: <span className="verdict__risk">{rupees(a.overbilled)}</span> this cycle
+                    Possibly overbilled:{" "}
+                    <span className="verdict__risk">
+                      <Num value={a.overbilled} format={rupees} count />
+                    </span>{" "}
+                    this cycle
                   </>
                 ) : (
                   "No overbilling found in this cycle."
@@ -176,7 +185,7 @@ export default function Bill() {
 
           <section className="card">
             <h2 className="card__title">The meter arithmetic</h2>
-            <div className="meter-eq">
+            <div className="meter-eq" data-stagger>
               <span>
                 <span className="meter-eq__v">{bill.importUnits ?? "—"}</span>
                 <span className="meter-eq__l">import</span>
@@ -236,7 +245,7 @@ export default function Bill() {
 
           <section className="card">
             <h2 className="card__title">If they don't fix it</h2>
-            <ol className="escalate">
+            <ol className="escalate" data-stagger>
               <li>
                 <div>
                   <b>DISCOM sub-division</b>

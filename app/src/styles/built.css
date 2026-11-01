@@ -44,8 +44,53 @@
   align-items: start;
 }
 .stage-row__n {
+  position: relative;
   color: var(--text-3);
-  padding-top: 3px;
+  padding: 3px 0 0 18px;
+  transition: color 0.3s ease;
+}
+/* The lifecycle rail: a hairline down the number column that fills with
+   scroll. Each stage's dot and number take the fill colour as it arrives. */
+.stages-track {
+  position: relative;
+}
+.stages__rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--line-2);
+}
+.stages__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--neel);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+}
+.stage-row__n::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line-2);
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.stage-row.is-on .stage-row__n {
+  color: var(--neel);
+}
+.stage-row.is-on .stage-row__n::before {
+  background: var(--neel);
+  box-shadow: inset 0 0 0 2px var(--neel);
 }
 .stage-row__k {
   font-size: var(--step-1);

@@ -1,5 +1,5 @@
 import { Copy, WhatsappLogo } from "@phosphor-icons/react";
-import { usePageIntro } from "../lib/motion";
+import { usePageIntro, useRestamp } from "../lib/motion";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { detectMode, type Mode } from "../ai/client";
@@ -9,6 +9,7 @@ import { PriceBand } from "../components/charts";
 import { DocIntake } from "../components/DocIntake";
 import { Findings } from "../components/Findings";
 import { LeadForm } from "../components/LeadForm";
+import { Num } from "../components/Num";
 import { Field, NumberInput, Segmented, Select, TextInput, TriState } from "../components/ui";
 import { SAMPLE_QUOTES } from "../data/samples";
 import { CITIES } from "../engine/climate";
@@ -17,6 +18,7 @@ import { auditQuote, EMPTY_QUOTE, negotiationMessage, type Quote as Q, type Stru
 import { STATES } from "../engine/states";
 import { numParam } from "../lib/params";
 import "../styles/tools.css";
+import { QuoteArt } from "../components/PageArt";
 
 const STATE_OPTS = Object.values(STATES)
   .sort((a, b) => a.name.localeCompare(b.name))
@@ -50,10 +52,12 @@ export default function Quote() {
   const msg = useMemo(() => negotiationMessage(q, a, lang), [q, a, lang]);
   const set = <K extends keyof Q>(k: K) => (v: Q[K]) => setQ((p) => ({ ...p, [k]: v }));
   const kwp = a.actualKwp ?? q.systemKw;
+  const ungraded = a.incomplete && a.findings.every((x) => x.severity !== "critical");
+  const stamp = useRestamp<HTMLDivElement>(ungraded ? "?" : a.grade);
 
   return (
     <div className="page" ref={intro}>
-      <header className="wrap page__head">
+      <header className="wrap page__head page__head--art">
         <p className="eyebrow">Quote Check</p>
         <h1 className="page__title">Is this quote fair?</h1>
         <p className="page__lede">Upload the installer's quotation. Chhat reads it, checks 14 things that cost people money, and writes the reply for you.</p>
@@ -63,6 +67,7 @@ export default function Quote() {
             Got two or three quotes? Compare them
           </Link>
         </div>
+        <QuoteArt />
       </header>
 
       <div className="wrap audit__grid">
@@ -185,12 +190,12 @@ export default function Quote() {
 
         <div className="audit__results" aria-live="polite">
           <section className="verdict">
-            {a.incomplete && a.findings.every((x) => x.severity !== "critical") ? (
-              <div className="grade" data-g="none" aria-label="Not graded yet">
+            {ungraded ? (
+              <div className="grade" data-g="none" aria-label="Not graded yet" ref={stamp} data-stamp>
                 ?
               </div>
             ) : (
-              <div className="grade" data-g={a.grade} aria-label={`Grade ${a.grade}`}>
+              <div className="grade" data-g={a.grade} aria-label={`Grade ${a.grade}`} ref={stamp} data-stamp>
                 {a.grade}
               </div>
             )}
@@ -200,7 +205,10 @@ export default function Quote() {
                 {a.incomplete ? "Chhat needs the system size and total price to grade the deal. " : `Score ${a.score}/100. `}
                 {a.incomplete && a.moneyAtRisk === 0 ? null : a.moneyAtRisk > 0 ? (
                   <>
-                    Money at risk: <span className="verdict__risk">{rupees(a.moneyAtRisk)}</span>
+                    Money at risk:{" "}
+                    <span className="verdict__risk">
+                      <Num value={a.moneyAtRisk} format={rupees} count />
+                    </span>
                   </>
                 ) : (
                   "No money at risk found."

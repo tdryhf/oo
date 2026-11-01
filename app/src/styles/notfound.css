@@ -6,7 +6,8 @@
 .nf__head {
   display: grid;
   gap: 18px;
-  justify-items: start;
+  justify-items: center;
+  text-align: center;
 }
 .nf__art {
   position: relative;

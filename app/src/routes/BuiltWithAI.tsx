@@ -1,12 +1,15 @@
 import { ArrowUpRight, GitCommit, Robot, User } from "@phosphor-icons/react";
-import { usePageIntro } from "../lib/motion";
-import { useEffect } from "react";
+import { EASE, gsap, ScrollTrigger, usePageIntro } from "../lib/motion";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { TOOL_SCHEMAS } from "../ai/tools";
+import { Num } from "../components/Num";
 import { Stat } from "../components/ui";
+import { prefersReducedMotion } from "../lib/env";
 import { REPO_BLOB } from "../config";
 import buildlog from "../data/buildlog.json";
 import { num } from "../engine/format";
 import "../styles/built.css";
+import { BuiltArt } from "../components/PageArt";
 
 interface Commit {
   hash: string;
@@ -115,59 +118,135 @@ const SYSTEM_EXCERPT = `You are Chhat, an independent rooftop-solar advisor for 
 - Reply in the user's language and script. Use gender-neutral Hindi phrasing for yourself.
 - Be brief and concrete: 2 to 6 sentences, or a short list. Indian number formatting.`;
 
+/** Run once the router has scrolled to the top, so scroll triggers measure the new page. */
+function afterScrollReset(ctx: gsap.Context, fn: () => void) {
+  let raf = requestAnimationFrame(() => (raf = requestAnimationFrame(() => ctx.add(fn))));
+  return () => cancelAnimationFrame(raf);
+}
+
+/** The rail beside the lifecycle fills as you read down it, and each stage lights up as the fill reaches it. */
+function useLifecycleRail(ref: RefObject<HTMLDivElement>) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {}, el);
+    const stop = afterScrollReset(ctx, () => {
+      gsap.fromTo(".stages__fill", { scaleY: 0 }, { scaleY: 1, ease: "none", scrollTrigger: { trigger: el, start: "top 62%", end: "bottom 62%", scrub: 0.3 } });
+      el.querySelectorAll<HTMLElement>(".stage-row").forEach((row) =>
+        ScrollTrigger.create({ trigger: row, start: "top+=26 62%", onEnter: () => row.classList.add("is-on"), onLeaveBack: () => row.classList.remove("is-on") }),
+      );
+    });
+    return () => {
+      stop();
+      ctx.revert();
+    };
+  }, [ref]);
+}
+
+/** The diagram assembles in the order a question travels: browser, the two modes, the tools, the engine. */
+function useArchitectureFlow(ref: RefObject<HTMLElement>) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {}, el);
+    const boxes = el.querySelectorAll(".arch__box");
+    const lines = el.querySelectorAll(".arch__line");
+    const notes = el.querySelectorAll(".arch__note");
+    if (boxes.length < 5 || lines.length < 5) return;
+    ctx.add(() => gsap.set([...boxes, ...lines, ...notes], { opacity: 0 }));
+    const stop = afterScrollReset(ctx, () => {
+      const show = { opacity: 1, duration: 0.32, ease: EASE.out };
+      gsap
+        .timeline({ scrollTrigger: { trigger: el, start: "top 72%", once: true } })
+        .to(boxes[0], show)
+        .to([lines[0], lines[1], ...notes], { ...show, duration: 0.25 }, "-=0.12")
+        .to([boxes[1], boxes[2]], { ...show, stagger: 0.06 }, "-=0.1")
+        .to([lines[2], lines[3]], { ...show, duration: 0.25 }, "-=0.12")
+        .to(boxes[3], show, "-=0.1")
+        .to(lines[4], { ...show, duration: 0.25 }, "-=0.12")
+        .to(boxes[4], show, "-=0.1");
+    });
+    return () => {
+      stop();
+      ctx.revert();
+    };
+  }, [ref]);
+}
+
 export default function BuiltWithAI() {
   const intro = usePageIntro<HTMLDivElement>();
+  const track = useRef<HTMLDivElement>(null);
+  const arch = useRef<HTMLElement>(null);
   useEffect(() => {
     document.title = "Built with AI · Chhat";
   }, []);
+  useLifecycleRail(track);
+  useArchitectureFlow(arch);
   const s = LOG.stats;
   return (
     <div className="page built-page" ref={intro}>
-      <header className="wrap page__head">
+      <header className="wrap page__head page__head--art">
         <p className="eyebrow">AI usage report · live</p>
         <h1 className="page__title">Two briefs in. A startup out.</h1>
         <p className="page__lede">
           Claude Code (Anthropic) did the research, ran the idea tournament, wrote every line of code and copy, designed the 3D world, built the financial model and the deck, and tested its own output in a headless browser. A person wrote two briefs and reviewed the result.
         </p>
+        <BuiltArt />
       </header>
 
       <section className="wrap">
         <div className="built-stats">
-          <Stat label="Product commits" value={num(s.commits)} />
-          <Stat label="Lines of source" value={num(s.loc)} />
-          <Stat label="Unit + end-to-end tests" value={s.e2e ? `${num(s.tests)} + ${num(s.e2e)}` : num(s.tests)} />
-          <Stat label="Words of research & planning" value={num(s.docWords)} />
+          <Stat label="Product commits" value={<Num value={s.commits} format={num} count />} />
+          <Stat label="Lines of source" value={<Num value={s.loc} format={num} count />} />
+          <Stat
+            label="Unit + end-to-end tests"
+            value={
+              s.e2e ? (
+                <>
+                  <Num value={s.tests} format={num} count /> + <Num value={s.e2e} format={num} count />
+                </>
+              ) : (
+                <Num value={s.tests} format={num} count />
+              )
+            }
+          />
+          <Stat label="Words of research & planning" value={<Num value={s.docWords} format={num} count />} />
           <Stat label="Product code typed by a human" value="0 lines" />
         </div>
       </section>
 
       <section className="wrap built-section">
         <h2 className="section-h">The lifecycle, stage by stage</h2>
-        <div className="stages">
-          {STAGES.map((st, i) => (
-            <article key={st.k} className="stage-row">
-              <span className="stage-row__n mono">{String(i + 1).padStart(2, "0")}</span>
-              <h3 className="stage-row__k">{st.k}</h3>
-              <div className="stage-row__ai">
-                <Robot size={16} weight="fill" />
-                <p>{st.ai}</p>
-              </div>
-              <div className="stage-row__human">
-                <User size={16} weight="fill" />
-                <p>{st.human}</p>
-              </div>
-              <a className="stage-row__doc mono" href={`${REPO_BLOB}/${st.doc}`} target="_blank" rel="noreferrer">
-                {st.doc} <ArrowUpRight size={12} weight="bold" />
-              </a>
-            </article>
-          ))}
+        <div className="stages-track" ref={track}>
+          <span className="stages__rail" aria-hidden="true">
+            <span className="stages__fill" />
+          </span>
+          <div className="stages" data-stagger>
+            {STAGES.map((st, i) => (
+              <article key={st.k} className="stage-row">
+                <span className="stage-row__n mono">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="stage-row__k">{st.k}</h3>
+                <div className="stage-row__ai">
+                  <Robot size={16} weight="fill" />
+                  <p>{st.ai}</p>
+                </div>
+                <div className="stage-row__human">
+                  <User size={16} weight="fill" />
+                  <p>{st.human}</p>
+                </div>
+                <a className="stage-row__doc mono" href={`${REPO_BLOB}/${st.doc}`} target="_blank" rel="noreferrer">
+                  {st.doc} <ArrowUpRight size={12} weight="bold" />
+                </a>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="wrap built-section built-two">
         <div>
           <h2 className="section-h">How the product's AI works</h2>
-          <figure className="arch" aria-label="Architecture diagram">
+          <figure className="arch" aria-label="Architecture diagram" ref={arch}>
             <svg viewBox="0 0 640 430" role="img">
               <title>Chhat's agent architecture</title>
               <defs>
@@ -215,7 +294,7 @@ export default function BuiltWithAI() {
         </div>
         <div>
           <h2 className="section-h">The tools Claude can call</h2>
-          <ul className="toollist">
+          <ul className="toollist" data-stagger>
             {TOOL_SCHEMAS.map((t) => (
               <li key={t.name}>
                 <code>{t.name}</code>
@@ -247,7 +326,7 @@ export default function BuiltWithAI() {
       <section className="wrap built-section">
         <h2 className="section-h">Commit log</h2>
         <p className="muted small">Generated from git at build time ({new Date(LOG.generated).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}). Every commit is co-authored by Claude.</p>
-        <ol className="commits">
+        <ol className="commits" data-stagger>
           {[...LOG.commits].reverse().map((c) => (
             <li key={c.hash}>
               <GitCommit size={18} weight="bold" />

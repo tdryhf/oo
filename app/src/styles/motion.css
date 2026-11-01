@@ -229,4 +229,17 @@ html.has-cursor [contenteditable="true"] {
   .cursor {
     display: none !important;
   }
+  /* Print the final figure, never a frame of the count. */
+  .num > [aria-hidden] {
+    display: none;
+  }
+  .num > .sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    clip: auto;
+    overflow: visible;
+    white-space: normal;
+  }
 }

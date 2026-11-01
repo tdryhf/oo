@@ -10,6 +10,7 @@ import { CashflowChart, MonthlyChart } from "../components/charts";
 import { DocIntake, type IntakeMeta } from "../components/DocIntake";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { LeadForm } from "../components/LeadForm";
+import { Num } from "../components/Num";
 import { Field, NumberInput, Segmented, Select, Slider, SourceTip, Stat } from "../components/ui";
 import { SAMPLE_BILLS } from "../data/samples";
 import { CITIES, CLIMATE_SOURCE, cityByName, climateFromCity, fetchClimate, nearestCity } from "../engine/climate";
@@ -29,6 +30,8 @@ import { MAX_PANELS } from "../three/layout";
 import "../styles/tools.css";
 
 const RoofScene = lazy(() => import("../three/RoofScene"));
+const tonnes = (v: number) => `${v.toFixed(1)} t`;
+const trees = (v: number) => `${num(v)} trees`;
 const POSTER = { backgroundImage: "linear-gradient(rgba(240,245,249,.75),rgba(240,245,249,.75)), url(./poster.jpg)", backgroundSize: "cover" };
 
 const STEPS = [
@@ -289,9 +292,9 @@ export default function Report() {
         </div>
       </header>
 
-      {/* 3D stage */}
-      <section className="wrap">
-        <div className="stage" ref={sceneWrap}>
+      {/* 3D stage: opens like a window once the title is up */}
+      <div className="wrap">
+        <div className="stage" ref={sceneWrap} data-reveal="clip">
           {gl ? (
             <ErrorBoundary fallback={() => <div className="stage__poster stage__poster--msg" style={POSTER}>3D view didn't load. Every number below still works.</div>}>
               <Suspense fallback={<div className="stage__poster" />}>
@@ -324,7 +327,7 @@ export default function Report() {
             {s.panels} × 545 W · tilt {defaultTilt(climate.lat)}° south
           </span>
         </div>
-      </section>
+      </div>
 
       <div className="wrap report__grid">
         {/* ------------------------------ inputs */}
@@ -443,10 +446,10 @@ export default function Report() {
         {/* ------------------------------ results */}
         <div className="report__results" aria-live="polite">
           <section className="kpis">
-            <Stat label="System" value={kw(s.kwp)} hint={`${s.panels} panels · ${s.sizing.limitedBy === "consumption" ? "sized to your use" : s.sizing.limitedBy === "roof" ? "limited by roof" : "limited by load"}`} />
-            <Stat label="Makes a year" value={`${num(s.annualGeneration)}`} hint={`units · covers ${Math.round(s.net.coverage * 100)}% of use`} />
-            <Stat label="Saves a year" hi="बचत" value={rupees(s.net.savings)} hint={`≈ ${rupees(s.monthlySavingAvg)} a month`} />
-            <Stat label="Pays back" value={years(s.payback)} hint={`IRR ${s.irr ? (s.irr * 100).toFixed(0) : "—"}%`} />
+            <Stat label="System" value={<Num value={s.kwp} format={kw} />} hint={`${s.panels} panels · ${s.sizing.limitedBy === "consumption" ? "sized to your use" : s.sizing.limitedBy === "roof" ? "limited by roof" : "limited by load"}`} />
+            <Stat label="Makes a year" value={<Num value={s.annualGeneration} format={num} />} hint={`units · covers ${Math.round(s.net.coverage * 100)}% of use`} />
+            <Stat label="Saves a year" hi="बचत" value={<Num value={s.net.savings} format={rupees} />} hint={`≈ ${rupees(s.monthlySavingAvg)} a month`} />
+            <Stat label="Pays back" value={s.payback === null ? years(null) : <Num value={s.payback} format={years} />} hint={`IRR ${s.irr ? (s.irr * 100).toFixed(0) : "—"}%`} />
           </section>
 
           <RoofCapacity
@@ -515,7 +518,9 @@ export default function Report() {
                 )}
                 <div className="ledger__total">
                   <dt>You pay, net</dt>
-                  <dd className="mono">{rupees(s.netCost)}</dd>
+                  <dd className="mono">
+                    <Num value={s.netCost} format={rupees} />
+                  </dd>
                 </div>
               </dl>
               <p className="muted small">{s.subsidy.centralRule}. Paid only for DCR panels with ALMM List-II cells.</p>
@@ -537,7 +542,9 @@ export default function Report() {
                 </div>
                 <div className="ledger__total">
                   <dt>Average saving a month</dt>
-                  <dd className="mono haldi">{rupees(s.monthlySavingAvg)}</dd>
+                  <dd className="mono haldi">
+                    <Num value={s.monthlySavingAvg} format={rupees} />
+                  </dd>
                 </div>
               </dl>
               <p className="small" style={{ opacity: 0.75 }}>
@@ -558,14 +565,14 @@ export default function Report() {
           </section>
 
           <section className="impact">
-            <Stat label="CO₂ avoided a year" value={`${s.co2TonnesYear.toFixed(1)} t`} hint={`${num(s.co2Tonnes25)} t over 25 years`} />
-            <Stat label="Like planting" value={`${num(s.treesEquivalent)} trees`} hint={`at ${KG_CO2_PER_TREE_YEAR} kg CO₂ per tree-year`} />
-            <Stat label="25-year net savings" value={rupeesShort(s.lifetimeSavings)} hint={`NPV ${rupeesShort(s.npv25)} at 8%`} />
+            <Stat label="CO₂ avoided a year" value={<Num value={s.co2TonnesYear} format={tonnes} count />} hint={`${num(s.co2Tonnes25)} t over 25 years`} />
+            <Stat label="Like planting" value={<Num value={s.treesEquivalent} format={trees} count />} hint={`at ${KG_CO2_PER_TREE_YEAR} kg CO₂ per tree-year`} />
+            <Stat label="25-year net savings" value={<Num value={s.lifetimeSavings} format={rupeesShort} count />} hint={`NPV ${rupeesShort(s.npv25)} at 8%`} />
           </section>
 
           <section className="card">
             <h2 className="card__title">What to do next</h2>
-            <ol className="steps">
+            <ol className="steps" data-stagger>
               {STEPS.map((x, i) => (
                 <li key={x.t}>
                   <span className="steps__n mono">{String(i + 1).padStart(2, "0")}</span>
