@@ -4,7 +4,8 @@
 //   GROQ_API_KEY                   → GroqCloud     (model: GROQ_MODEL, default openai/gpt-oss-120b)
 //   ANTHROPIC_API_KEY              → Claude        (see claude.ts)
 //
-// The first one set wins. With none set, the site runs fully on-device.
+// The first one set wins. With none set, a committed free Groq key is used
+// (server/groqKey.ts); tests still run fully on-device.
 // xAI and Groq both speak the OpenAI chat-completions format, so one client
 // serves both. Keys are read here, on the server, and never sent to a browser.
 //
@@ -12,6 +13,7 @@
 // kW and unit figure comes from runTool(), the tested engine.
 
 import * as claude from "./claude";
+import { BUILT_IN_GROQ_KEY } from "./groqKey";
 import { runTool, TOOL_SCHEMAS } from "../src/ai/tools";
 
 export type Provider = "xai" | "groq" | "anthropic";
@@ -38,7 +40,10 @@ function openAIConfig(): OpenAIConfig | null {
     const model = env("XAI_MODEL") ?? "grok-4";
     return { provider: "xai", baseUrl: "https://api.x.ai/v1", key: xai, model, visionModel: env("XAI_VISION_MODEL") ?? model };
   }
-  const groq = env("GROQ_API_KEY");
+  // The committed key is the last resort: not under tests, and not when a
+  // Claude key is configured instead.
+  const builtIn = env("VITEST") || env("ANTHROPIC_API_KEY") ? undefined : BUILT_IN_GROQ_KEY;
+  const groq = env("GROQ_API_KEY") ?? builtIn;
   if (groq) {
     return {
       provider: "groq",
