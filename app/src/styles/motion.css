@@ -54,7 +54,7 @@
   font-size: clamp(3.4rem, 9vw, 8rem);
   line-height: 0.85;
   color: var(--haldi);
-  letter-spacing: -0.05em;
+  letter-spacing: -0.04em;
   font-weight: 600;
 }
 .pre__steps {
@@ -113,7 +113,7 @@
   font-size: clamp(2.6rem, 8vw, 7.4rem);
   font-weight: 760;
   font-variation-settings: "wdth" 112;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.04em;
   line-height: 1;
 }
 .curtain__line--hi {

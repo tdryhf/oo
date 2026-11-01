@@ -1,0 +1,24 @@
+{
+  "note": "All props are CC0 (public domain) from Poly Haven. Processed by scripts/fetch-props.mjs.",
+  "generated": "2026-10-31",
+  "props": [
+    {
+      "file": "props/magnifier.glb",
+      "source": "https://polyhaven.com/a/magnifying_glass_01",
+      "id": "magnifying_glass_01",
+      "license": "CC0",
+      "role": "Quote Check: the second look before you sign",
+      "bytes": 92252,
+      "tris": 7240
+    },
+    {
+      "file": "props/multimeter.glb",
+      "source": "https://polyhaven.com/a/retro_multimeter",
+      "id": "retro_multimeter",
+      "license": "CC0",
+      "role": "Bill Audit: checks the meter arithmetic",
+      "bytes": 127540,
+      "tris": 6263
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAsk } from "../components/AskChhat";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Preloader } from "../components/Preloader";
+import { Prop3D } from "../components/Prop3D";
 import { LinkButton, Select, Stat } from "../components/ui";
 import buildlog from "../data/buildlog.json";
 import { CITIES, cityByName, climateFromCity } from "../engine/climate";
@@ -13,6 +14,7 @@ import { buildReport } from "../engine/report";
 import { formatClock, sunPosition, sunTimes } from "../engine/solar";
 import { hasWebGL, isLowPower, prefersReducedMotion } from "../lib/env";
 import { countUp, EASE, gsap, ScrollTrigger, SplitText, useMagnetic, useReveals } from "../lib/motion";
+import { stackClip, stackDim, stackProgress } from "../lib/propScroll";
 import { CHAPTERS, chapterAt, colorsAt, dialPoint, HOUR_KEYS, interp, smoothstep, STEPS } from "../lib/story";
 import { useLenis } from "../lib/smooth";
 import { MODEL_NAMES, TEXTURE_NAMES } from "../three/manifest";
@@ -535,6 +537,9 @@ function QuickReport() {
   );
 }
 
+/** Sticky cards stop moving, so their objects follow the stack instead. */
+const STACK = { progress: stackProgress, clip: stackClip, dim: stackDim };
+
 function Tools() {
   const { open } = useAsk();
   const root = useRef<HTMLElement>(null);
@@ -579,6 +584,7 @@ function Tools() {
               </span>
             </div>
             <div className="stack-card__demo">
+              <Prop3D kind="panel" className="stack-card__prop" {...STACK} />
               <QuickReport />
             </div>
           </div>
@@ -599,6 +605,7 @@ function Tools() {
               </LinkButton>
             </div>
             <div className="stack-card__demo" aria-hidden="true">
+              <Prop3D kind="magnifier" className="stack-card__prop" {...STACK} />
               <div className="paper">
                 <div className="paper__head">
                   <span className="mono">QTN/2026/0419</span>
@@ -634,6 +641,7 @@ function Tools() {
               </LinkButton>
             </div>
             <div className="stack-card__demo" aria-hidden="true">
+              <Prop3D kind="multimeter" className="stack-card__prop" {...STACK} />
               <div className="meter-math mono">
                 <span>410 import</span>
                 <span>− 236 export</span>
