@@ -1,9 +1,13 @@
+**Live site: https://oo-theta-peach.vercel.app/**
+
 # Chhat · छत
 
 **Solar, without the sales pitch.** The independent AI solar advisor for Indian homes.
 
 Chhat reads your electricity bill, models your roof on 20 years of NASA sunlight, stacks every PM Surya Ghar subsidy, compares cash and loan, audits the installer's quote before you sign, and audits your DISCOM bills after you go solar.
 
+> **Status: shipped.** Chhat is live on Vercel and submitted for HackIndia.
+>
 > HackIndia · AI-First Startup Hackathon (Build a Startup Using AI Only), 2026 · Team **404 not found** · Track: AI in any startup (climate) + FinTech
 
 ---
