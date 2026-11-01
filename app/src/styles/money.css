@@ -197,6 +197,7 @@
 .never__list {
   display: grid;
   gap: 10px;
+  max-width: 68ch;
   padding-left: 1.2em;
   line-height: 1.5;
 }

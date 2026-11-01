@@ -11,6 +11,7 @@ import { compareQuotes, loadSlots, saveSlots, SLOTS, type Compared } from "../li
 import { usePageIntro } from "../lib/motion";
 import "../styles/tools.css";
 import "../styles/compare.css";
+import { CompareArt } from "../components/PageArt";
 
 type Parsed = Quote & { city?: string | null };
 const strip = ({ city: _c, ...q }: Parsed): Quote => (void _c, { ...EMPTY_QUOTE, ...q });
@@ -145,7 +146,7 @@ export default function Compare() {
 
   return (
     <div className="page" ref={intro}>
-      <header className="wrap page__head">
+      <header className="wrap page__head page__head--art">
         <p className="eyebrow">Compare quotes</p>
         <h1 className="page__title">Which quote should you sign?</h1>
         <p className="page__lede">Add up to three installer quotes. Chhat runs the same 14-rule audit on each and lines them up: real size, price against the fair band, subsidy risk, warranties. Saved in this browser, so quotes that arrive on different days still line up.</p>
@@ -159,6 +160,7 @@ export default function Compare() {
             </button>
           )}
         </div>
+        <CompareArt />
       </header>
 
       <div className="wrap compare">

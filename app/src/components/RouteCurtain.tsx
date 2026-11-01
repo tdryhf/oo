@@ -11,6 +11,8 @@ const NAMES: Record<string, [string, string]> = {
   "/ask": ["Ask Chhat", "छत से पूछें"],
   "/built-with-ai": ["Built with AI", "एआई से बना"],
   "/deck": ["Pitch deck", "पिच डेक"],
+  "/installers": ["For installers", "इंस्टॉलर के लिए"],
+  "/compare": ["Compare quotes", "कोटेशन तुलना"],
 };
 
 /**

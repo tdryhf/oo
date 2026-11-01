@@ -1,0 +1,480 @@
+/* Page illustrations (components/PageArt.tsx). Drawn in the site's own
+   materials: paper sheets, ink lines, neel for the system, haldi for sun and
+   money, sindoor for what is wrong, leaf for what is right. */
+
+.page__head--art {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+  column-gap: var(--space-7);
+  align-items: center;
+}
+.page__head--art > * {
+  grid-column: 1;
+}
+.page__head--art > .art {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+}
+@media (max-width: 960px) {
+  .page__head--art {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .page__head--art > .art {
+    display: none;
+  }
+}
+
+.art {
+  margin: 0;
+  width: 100%;
+  justify-self: end;
+}
+.art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Paper and ink */
+.art-sheet {
+  fill: var(--surface);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.art-shadow {
+  fill: var(--ink);
+  opacity: 0.07;
+}
+.art-hair {
+  stroke: var(--line-2);
+  stroke-width: 1.2;
+}
+.art-bar {
+  stroke: var(--paper-3);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.art-bar--ink {
+  stroke: var(--ink-3);
+}
+.art-ink {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art-ink--good {
+  stroke: var(--leaf);
+  stroke-width: 2.4;
+}
+.art-ink--paper {
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+
+/* Type */
+.art-t {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  fill: var(--text-2);
+}
+.art-t--small {
+  font-size: 11px;
+}
+.art-t--strong {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.art-t--bad {
+  fill: var(--sindoor);
+  font-weight: 600;
+}
+.art-t--good {
+  fill: oklch(0.45 0.11 155);
+  font-weight: 600;
+}
+.art-t--warn {
+  fill: var(--haldi-2);
+  font-weight: 600;
+}
+.art-t--neel {
+  fill: var(--neel-2);
+  font-weight: 600;
+}
+.art-t--paper {
+  fill: var(--paper);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.art-big {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  fill: var(--ink);
+  letter-spacing: -0.02em;
+}
+.art-big--left {
+  font-size: 30px;
+}
+.art-deva {
+  font-family: var(--font-deva);
+  font-size: 17px;
+  fill: var(--paper);
+}
+.art-deva--ink {
+  fill: var(--haldi-2);
+  font-size: 22px;
+}
+.art-word {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 26px;
+  fill: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+/* Quote Check */
+.art-lens {
+  fill: oklch(0.985 0.005 235 / 0.94);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.art-lens-ring {
+  fill: none;
+  stroke: var(--neel-soft);
+  stroke-width: 2;
+}
+.art-handle {
+  stroke: var(--ink);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.art-strike {
+  stroke: var(--sindoor);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+.art-note {
+  fill: var(--haldi-soft);
+  stroke: var(--haldi-2);
+  stroke-width: 1.2;
+}
+.art-stamp {
+  fill: none;
+  stroke: var(--sindoor);
+  stroke-width: 3;
+}
+.art-stamp--thin {
+  stroke-width: 1.2;
+}
+.art-stamp-t {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  fill: var(--sindoor);
+}
+
+/* Bill Audit */
+.art-flag {
+  fill: var(--sindoor-soft);
+}
+.art-device {
+  fill: var(--ink);
+}
+.art-lcd {
+  fill: oklch(0.9 0.06 140);
+}
+.art-lcd-t {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 24px;
+  fill: var(--ink);
+}
+.art-lcd-s {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--ink-3);
+  letter-spacing: 0.08em;
+}
+.art-dial {
+  fill: var(--ink-3);
+}
+.art-arrow {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art-arrow--in {
+  stroke: var(--neel-soft);
+}
+.art-arrow--out {
+  stroke: var(--haldi);
+}
+.art-plate {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--paper-3);
+  letter-spacing: 0.1em;
+}
+.art-screw {
+  fill: var(--ink-3);
+}
+.art-pill {
+  fill: var(--surface);
+  stroke: var(--line-2);
+}
+.art-pill--good {
+  fill: var(--leaf-soft);
+  stroke: var(--leaf);
+}
+
+/* Compare */
+.art-chip-dot {
+  fill: var(--ink);
+}
+.art-dot-t {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  fill: var(--paper);
+}
+.art-drop {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-dasharray: 1;
+}
+.art-drop--good {
+  stroke: var(--leaf);
+}
+.art-drop--bad {
+  stroke: var(--sindoor);
+}
+.art-drop--warn {
+  stroke: var(--haldi-2);
+}
+.art-drop--neel {
+  stroke: var(--neel);
+  stroke-width: 2;
+}
+.art-band {
+  fill: var(--leaf-soft);
+  stroke: var(--leaf);
+  stroke-dasharray: 4 3;
+}
+.art-axis {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.art-mark {
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+.art-mark--good {
+  fill: var(--leaf);
+}
+.art-mark--bad {
+  fill: var(--sindoor);
+}
+.art-mark--warn {
+  fill: var(--haldi-2);
+}
+.art-badge {
+  fill: var(--leaf);
+}
+
+/* Ask */
+.art-bubble {
+  fill: var(--surface);
+  stroke: var(--line-2);
+}
+.art-bubble--me {
+  fill: var(--ink);
+  stroke: none;
+}
+.art-trace {
+  stroke: var(--neel-soft);
+  stroke-width: 2;
+  stroke-dasharray: 3 4;
+}
+.art-node {
+  fill: var(--neel);
+}
+.art-tool {
+  fill: oklch(0.94 0.025 250);
+  stroke: var(--neel-soft);
+}
+.art-sun {
+  fill: var(--haldi);
+}
+.art-typing circle {
+  fill: var(--text-3);
+}
+
+/* Installers */
+.art-roof {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.art-panels {
+  fill: var(--neel);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.art-panel-lines {
+  fill: none;
+  stroke: var(--neel-soft);
+  stroke-width: 1;
+}
+.art-door {
+  fill: var(--haldi-soft);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.art-window {
+  fill: var(--neel-soft);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.art-pin {
+  fill: var(--sindoor);
+}
+.art-pin-dot {
+  fill: var(--surface);
+}
+.art-ticket-head {
+  fill: var(--ink);
+}
+.art-lockrow {
+  fill: var(--haldi-soft);
+}
+.art-lock {
+  fill: var(--ink);
+}
+.art-tag {
+  fill: var(--haldi);
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+.art-tag-hole {
+  fill: var(--surface);
+  stroke: var(--ink);
+}
+
+/* Built with AI */
+.art-core {
+  fill: var(--ink);
+}
+.art-spark {
+  fill: none;
+  stroke: var(--haldi);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+.art-orbit-ring {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-dasharray: 2 5;
+}
+.art-orbit-dot {
+  fill: var(--neel);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.art-slab {
+  fill: var(--ink-3);
+}
+
+/* Motion: build up in a few steps, then stay nearly still. */
+.art-step {
+  animation: art-in 0.6s var(--ease-out) both;
+  animation-delay: calc(0.3s + var(--s, 0) * 0.16s);
+}
+.art-step--stamp {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: art-stamp;
+  animation-duration: 0.45s;
+}
+.art-step .art-drop,
+.art-step .art-strike {
+  animation: art-draw 0.7s var(--ease-out) both;
+  animation-delay: calc(0.45s + var(--s, 0) * 0.16s);
+}
+.art-float {
+  animation: art-float 7s ease-in-out 1.5s infinite alternate;
+}
+.art-pulse {
+  animation: art-pulse 2.4s ease-in-out 1.5s infinite;
+}
+.art-orbit {
+  transform-box: view-box;
+  transform-origin: 230px 180px;
+  animation: art-spin 60s linear infinite;
+}
+.art-typing circle {
+  animation: art-pulse 1.4s ease-in-out infinite;
+}
+.art-typing circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.art-typing circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes art-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes art-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+@keyframes art-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes art-float {
+  to {
+    transform: translateY(-6px);
+  }
+}
+@keyframes art-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes art-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-step,
+  .art-step .art-drop,
+  .art-step .art-strike,
+  .art-float,
+  .art-pulse,
+  .art-orbit,
+  .art-typing circle {
+    animation: none;
+  }
+}
+@media print {
+  .art {
+    display: none;
+  }
+}

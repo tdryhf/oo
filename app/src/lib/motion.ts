@@ -148,10 +148,57 @@ export function countUp(el: HTMLElement): () => void {
   };
 }
 
+// ---------------------------------------------------------------- page reveals
+//
+// A tool page reveals in blocks: every outermost <section>, plus anything
+// marked data-reveal ("clip" opens like a window instead of rising).
+// Children of a [data-stagger] list follow their block one by one, and a
+// [data-stamp] (a grade, a verdict mark) lands like a rubber stamp.
+// Only opacity and transform move, so text stays readable to tests and
+// screen readers the whole time.
+
+const BLOCK = "section, [data-reveal]";
+const FROM_UP = { opacity: 0, y: 28 };
+const FROM_CLIP = { opacity: 0, clipPath: "inset(6% 4% 6% 4% round 28px)" };
+const FROM_ITEM = { opacity: 0, y: 12 };
+// Relative, so a mark that rests at an angle (the grade sits at -8deg) lands back on it.
+const FROM_STAMP = { opacity: 0, scale: 1.4, rotate: "-=12" };
+
+function outermost(root: HTMLElement): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>(BLOCK)].filter((el) => {
+    if (el.closest(".page__head")) return false;
+    const up = el.parentElement?.closest(BLOCK);
+    return !up || !root.contains(up);
+  });
+}
+
+function itemsOf(block: HTMLElement): HTMLElement[] {
+  const lists = [...block.querySelectorAll<HTMLElement>("[data-stagger]")];
+  if (block.matches("[data-stagger]")) lists.unshift(block);
+  return lists.flatMap((l) => [...l.children] as HTMLElement[]);
+}
+
+const stampsOf = (block: HTMLElement) => [...block.querySelectorAll<HTMLElement>("[data-stamp]")];
+
+function enterBlock(b: HTMLElement, delay: number) {
+  if (b.dataset.reveal === "clip") {
+    gsap.to(b, { opacity: 1, duration: 0.3, delay, ease: "none" });
+    gsap.to(b, { clipPath: "inset(0% 0% 0% 0% round 0px)", duration: 1.15, delay, ease: EASE.out, clearProps: "clipPath,opacity" });
+  } else {
+    gsap.to(b, { opacity: 1, y: 0, duration: 0.75, delay, ease: EASE.out, clearProps: "opacity,transform" });
+  }
+  stampsOf(b).forEach((s) => gsap.to(s, { opacity: 1, scale: 1, rotate: "+=12", duration: 0.55, delay: delay + 0.2, ease: EASE.out, clearProps: "opacity,transform" }));
+}
+
+function enterItems(items: HTMLElement[], delay: number) {
+  gsap.to(items, { opacity: 1, y: 0, duration: 0.5, delay, ease: EASE.out, stagger: Math.min(0.05, 0.36 / items.length), clearProps: "opacity,transform" });
+}
+
 /**
- * Entrance for a tool page: the title rises line by line once the route
- * curtain has lifted, the rest of the header follows, and top-level
- * sections fade up the first time they scroll into view.
+ * Entrance for a tool page. The title rises line by line once the route
+ * curtain has lifted and the rest of the header follows. Blocks already on
+ * screen arrive in reading order right behind it, quick enough that nobody
+ * waits on them; the rest arrive as they scroll into view.
  */
 export function usePageIntro<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -159,25 +206,97 @@ export function usePageIntro<T extends HTMLElement>() {
     const root = ref.current;
     if (!root || prefersReducedMotion()) return;
     const undo: (() => void)[] = [];
+    let raf = 0;
+    let refresh = 0;
     const ctx = gsap.context(() => {
       const title = root.querySelector<HTMLElement>(".page__title");
       if (title) undo.push(revealLines(title, { scroll: false, delay: 0.32, stagger: 0.08 }));
-      const rest = root.querySelectorAll<HTMLElement>(".page__head > :not(.page__title)");
+      const rest = root.querySelectorAll<HTMLElement>(".page__head > :not(.page__title):not(.art)");
       if (rest.length) gsap.from(rest, { autoAlpha: 0, y: 16, duration: 0.8, ease: EASE.out, stagger: 0.06, delay: 0.42 });
-      const sections = root.querySelectorAll<HTMLElement>(":scope > section");
-      if (sections.length) {
-        gsap.set(sections, { autoAlpha: 0, y: 24 });
-        ScrollTrigger.batch(sections, {
-          start: "top 94%",
-          once: true,
-          onEnter: (batch) => gsap.to(batch, { autoAlpha: 1, y: 0, duration: 0.9, ease: EASE.out, stagger: 0.08, delay: 0.5, overwrite: true, clearProps: "transform" }),
-        });
-      }
+
+      const blocks = outermost(root);
+      if (!blocks.length) return;
+      const clips = blocks.filter((b) => b.dataset.reveal === "clip");
+      gsap.set(blocks.filter((b) => !clips.includes(b)), FROM_UP);
+      gsap.set(clips, FROM_CLIP);
+      gsap.set(blocks.flatMap(itemsOf), FROM_ITEM);
+      gsap.set(blocks.flatMap(stampsOf), FROM_STAMP);
+
+      // The router scrolls to the top after this runs, so measure against the document.
+      const fold = window.innerHeight * 0.95;
+      const top = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY;
+      const onScreen = blocks
+        .filter((b) => top(b) < fold)
+        .sort((a, b) => top(a) - top(b) || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+      const shown = new Set<HTMLElement>();
+      onScreen.forEach((b, i) => {
+        const d = 0.34 + Math.min(i, 4) * 0.06;
+        enterBlock(b, d);
+        const items = itemsOf(b).filter((k) => top(k) < fold);
+        items.forEach((k) => shown.add(k));
+        if (items.length) enterItems(items, d + 0.12);
+      });
+      const laterBlocks = blocks.filter((b) => !onScreen.includes(b));
+      const laterItems = blocks.flatMap(itemsOf).filter((k) => !shown.has(k));
+
+      // Wait two frames so the scroll reset has happened before triggers measure.
+      raf = requestAnimationFrame(() => {
+        raf = requestAnimationFrame(() =>
+          ctx.add(() => {
+            if (laterBlocks.length)
+              ScrollTrigger.batch(laterBlocks, { start: "top 92%", once: true, onEnter: (batch) => batch.forEach((b, i) => enterBlock(b as HTMLElement, i * 0.07)) });
+            // Same start line as blocks, so a list never plays before its card is visible.
+            if (laterItems.length) ScrollTrigger.batch(laterItems, { start: "top 92%", once: true, onEnter: (batch) => enterItems(batch as HTMLElement[], 0.12) });
+          }),
+        );
+      });
     }, root);
+    // Late content (fonts, the 3D view, a parsed document) moves blocks down; keep triggers honest.
+    const ro = new ResizeObserver(() => {
+      clearTimeout(refresh);
+      refresh = window.setTimeout(() => ScrollTrigger.refresh(), 200);
+    });
+    ro.observe(root);
     return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(refresh);
+      ro.disconnect();
       undo.forEach((f) => f());
       ctx.revert();
     };
   }, []);
+  return ref;
+}
+
+/** Re-stamp a verdict mark when its value changes. The first stamp belongs to the page intro. */
+export function useRestamp<T extends HTMLElement>(key: unknown) {
+  const ref = useRef<T>(null);
+  const first = useRef(true);
+  useLayoutEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return;
+    gsap.from(el, { opacity: 0.3, scale: 1.25, rotate: "-=6", duration: 0.45, ease: EASE.out, overwrite: true, clearProps: "opacity,transform" });
+  }, [key]);
+  return ref;
+}
+
+/** Fade in list items that were not there last render (a new finding after an edit). */
+export function useNewItems<T extends HTMLElement>(key: string) {
+  const ref = useRef<T>(null);
+  const seen = useRef<Set<string> | null>(null);
+  useLayoutEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    const kids = [...host.children] as HTMLElement[];
+    const before = seen.current;
+    seen.current = new Set(kids.map((k) => k.dataset.key ?? ""));
+    if (!before || prefersReducedMotion()) return;
+    const fresh = kids.filter((k) => !before.has(k.dataset.key ?? ""));
+    if (fresh.length) gsap.fromTo(fresh, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: EASE.out, stagger: 0.04, clearProps: "opacity,transform" });
+  }, [key]);
   return ref;
 }

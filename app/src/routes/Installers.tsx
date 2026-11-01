@@ -6,8 +6,10 @@ import { Field, Slider } from "../components/ui";
 import { rupees } from "../engine/format";
 import { costPerSale, deleteLead, leadPreview, loadLeads, markBought, maskPhone, paymentLink, PRICING, type Lead } from "../lib/leads";
 import { usePageIntro } from "../lib/motion";
+import { Num } from "../components/Num";
 import "../styles/tools.css";
 import "../styles/money.css";
+import { InstallersArt } from "../components/PageArt";
 
 /** A fictional lead so the inbox is never empty on a first visit. */
 const SAMPLE: Lead = {
@@ -108,16 +110,17 @@ export default function Installers() {
 
   return (
     <div className="page" ref={intro}>
-      <header className="wrap page__head">
+      <header className="wrap page__head page__head--art">
         <p className="eyebrow">For installers</p>
         <h1 className="page__title">Buy homes that are ready, not clicks.</h1>
         <p className="page__lede">
           Every Chhat request comes with a sized system, the home's real units and a buyer who already trusts the numbers. Homes use Chhat free. Installers pay for requests and for completed installs, never for a better grade.
         </p>
+        <InstallersArt />
       </header>
 
       <div className="wrap inst">
-        <section className="price-grid" aria-label="Prices">
+        <section className="price-grid" aria-label="Prices" data-stagger>
           <article className="card price price--main">
             <p className="price__who">Verified request</p>
             <p className="price__amt">
@@ -166,7 +169,7 @@ export default function Installers() {
               <Prohibit weight="bold" /> What Chhat never sells
             </span>
           </h2>
-          <ul className="never__list">
+          <ul className="never__list" data-stagger>
             <li><b>A better grade.</b> Every quote is graded by the same public rules, whether or not the installer pays. The rules are in the open-source repo.</li>
             <li><b>A higher place in a list.</b> Results are never ordered by who pays. The "Chhat Verified" badge comes from passing the audit.</li>
             <li><b>The home's documents.</b> Installers get the sized request, not the bill or the quote the home uploaded.</li>
@@ -185,7 +188,9 @@ export default function Installers() {
               </Field>
             </div>
             <div className="calc__out" aria-live="polite">
-              <p className="calc__big" data-testid="cost-per-sale">{rupees(c.total)}</p>
+              <p className="calc__big">
+                <Num value={c.total} format={rupees} testId="cost-per-sale" />
+              </p>
               <p className="small">
                 per closed sale: {rupees(c.leads)} in requests (after the 5% dispute credit) + {rupees(c.fee)} success fee. That is <b>{(c.share * 100).toFixed(1)}%</b> of the system.
               </p>
@@ -215,7 +220,7 @@ export default function Installers() {
           )}
         </section>
 
-        <section className="payers-mini" aria-label="Other payers">
+        <section className="payers-mini" aria-label="Other payers" data-stagger>
           <article className="card">
             <p className="price__who"><Bank weight="bold" /> Banks and NBFCs</p>
             <p className="price__amt price__amt--sm">{Math.round(PRICING.loanFee * 100)}% <span>of each loan originated</span></p>

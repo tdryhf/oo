@@ -1,6 +1,7 @@
 import { CheckCircle, Info, SealWarning, Warning } from "@phosphor-icons/react";
 import { rupees } from "../engine/format";
 import type { Finding } from "../engine/types";
+import { useNewItems } from "../lib/motion";
 
 const ICON = {
   critical: <SealWarning size={22} weight="fill" />,
@@ -12,10 +13,11 @@ const LABEL = { critical: "Critical", warn: "Warning", info: "Note", ok: "Pass" 
 
 export function Findings({ items, showOk = true }: { items: Finding[]; showOk?: boolean }) {
   const list = showOk ? items : items.filter((f) => f.severity !== "ok");
+  const ref = useNewItems<HTMLUListElement>(list.map((f) => f.id).join("|"));
   return (
-    <ul className="findings">
+    <ul className="findings" ref={ref} data-stagger>
       {list.map((f) => (
-        <li key={f.id} className="finding" data-sev={f.severity}>
+        <li key={f.id} className="finding" data-sev={f.severity} data-key={f.id}>
           <span className="finding__icon" role="img" aria-label={LABEL[f.severity]}>
             {ICON[f.severity]}
           </span>
